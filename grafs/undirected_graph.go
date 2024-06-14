@@ -4,69 +4,100 @@ import "fmt"
 
 func main() {
 
-	graph := &Graph{}
-	graph.AddLink(1, 2)
-	graph.AddLink(1, 3)
-	graph.AddLink(1, 4)
-	graph.AddLink(3, 5)
+	// Undirected Graph
+	var graph = make(map[string]*Node)
 
-	graph.BFS()
-}
+	addEdge(graph, "A", "B")
+	addEdge(graph, "A", "E")
+	addEdge(graph, "A", "C")
+	addEdge(graph, "A", "D")
 
-type Graph struct {
-	//array of adjacent vertices
-	elems map[Elem][]Elem
-}
+	// addEdge(graph, "B", "A")
+	addEdge(graph, "B", "C")
 
-type Elem struct {
-	value  int
-	marked bool
-}
+	// addEdge(graph, "C", "A")
+	// addEdge(graph, "C", "B")
 
-func (g *Graph) AddElem(value int) {
-	if g.elems == nil {
-		g.elems = make(map[Elem][]Elem)
-	} else if _, ok := g.elems[Elem{value, false}]; ok {
-		return
-	}
-	g.elems[Elem{value, false}] = []Elem{}
+	// addEdge(graph, "D", "A")
+
+	addEdge(graph, "C", "G")
+
+	addEdge(graph, "G", "V")
+
+	printGraph(graph)
+
+	bfs(graph, "A")
 
 }
 
-func (g *Graph) AddLink(from int, to int) {
-	if g.elems == nil {
-		g.elems = make(map[Elem][]Elem)
-	}
-	if _, ok := g.elems[Elem{from, false}]; !ok {
-		g.AddElem(from)
-	}
-	if _, ok := g.elems[Elem{to, false}]; !ok {
-		g.AddElem(to)
-	}
-
-	g.elems[Elem{from, false}] = append(g.elems[Elem{from, false}], Elem{to, false})
-	g.elems[Elem{to, false}] = append(g.elems[Elem{to, false}], Elem{from, false})
+type Node struct {
+	id            string
+	adjacentNodes []*Node
+	marked        bool
 }
 
-// Обход в ширину
-func (g *Graph) BFS() {
+func NewNode(id string) *Node {
+	return &Node{id: id, marked: false}
+}
 
-	if g.elems == nil {
-		return
+func addNode(graph map[string]*Node, id string) *Node {
+	if val, ok := graph[id]; ok {
+		return val
+	} else {
+		node := NewNode(id)
+		graph[id] = node
+		return node
 	}
+}
 
-	queue := make([]Elem, 0)
-	queue = append(queue, Elem{1, false})
+func addEdge(graph map[string]*Node, id1 string, id2 string) {
+	node1 := addNode(graph, id1)
+	node2 := addNode(graph, id2)
+	node1.adjacentNodes = append(node1.adjacentNodes, node2)
+	node2.adjacentNodes = append(node2.adjacentNodes, node1)
+}
 
-	for len(queue) > 0 {
-		current := queue[0]
+func printGraph(graph map[string]*Node) {
+	for _, node := range graph {
+		printNode(node)
+	}
+}
+
+func printNode(node *Node) {
+	fmt.Print(node.id, " -> ")
+	for _, adjacentNode := range node.adjacentNodes {
+		fmt.Print(adjacentNode.id, " ")
+	}
+	fmt.Println()
+}
+
+// BFS - поиск в ширину
+func bfs(graf map[string]*Node, startNodeId string) {
+	clearMarked(graf)
+	startNode := graf[startNodeId]
+
+	startNode.marked = true
+
+	queue := make([]*Node, 0)
+	queue = append(queue, startNode)
+
+	for len(queue) > 0 { // пока очередь не пустая
+		node := queue[0] // берем первый элемент
 		queue = queue[1:]
-		fmt.Println(current.value)
-		for _, elem := range g.elems[current] {
-			if !elem.marked {
-				queue = append(queue, elem)
-				elem.marked = true
+		fmt.Println(node.id)
+
+		for _, adjacentNode := range node.adjacentNodes {
+			if !adjacentNode.marked {
+				adjacentNode.marked = true
+				queue = append(queue, adjacentNode)
 			}
 		}
+	}
+
+}
+
+func clearMarked(graf map[string]*Node) {
+	for _, node := range graf {
+		node.marked = false
 	}
 }
